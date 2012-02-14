@@ -1,0 +1,4 @@
+cfgRole MASTER
+cfgHostName localhost
+cfgKnownHosts localhost
+

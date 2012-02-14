@@ -1,0 +1,23 @@
+name:                SimpleCounting
+version:             0.0.0.1
+synopsis:            Simple counting Remote/Cloud Haskell client server example
+description:         The server accepts two messages:
+                     A positive number message that is added to an existing count.
+                     A GetAndReset message that returns the current count and sets the count to 0.
+license:             BSD3
+license-file:        LICENSE
+author:              Mark Wright
+maintainer:          markwright@internode.on.net
+copyright:           Copyright (c) Mark Wright 2012. All rights reserved.
+category:            Distributed Computing
+build-type:          Simple
+cabal-version:       >=1.8
+
+executable SimpleCounting
+  main-is:           Main.hs
+  build-depends:     base,
+                     binary,        
+                     criterion,
+                     mtl,
+                     remote,
+                     stm
