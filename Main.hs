@@ -72,6 +72,11 @@ handleUnknown = do
   say "Received unknown"
   return ()
 
+handleGetAndResetReply :: GetAndResetReply -> ProcessM ()
+handleGetAndResetReply msg = do
+  say ("Received: " ++ show msg)
+  terminate
+
 newCount :: Int -> IO Count
 newCount n = atomically $ newTVar n
 
@@ -80,7 +85,7 @@ msgCount = 3000000
 
 masterProcess :: ProcessM ()
 masterProcess = do
-  mPid <- getSelfPid
+  mPid <- spawnLocal masterReceive
   slavePid <- spawnLocal $ slaveProcess mPid
   replicateM_ msgCount $ send slavePid AddCountRequest { acrCount = 100 }
   send slavePid GetAndResetRequest
@@ -91,6 +96,13 @@ slaveProcess :: ProcessId -> ProcessM ()
 slaveProcess mPid = do
   c <- liftIO $ newCount 0
   slave mPid c
+
+masterReceive :: ProcessM ()
+masterReceive =
+  receiveWait [ match (\(msg@GetAndResetReply{}) -> handleGetAndResetReply msg)
+              , matchUnknown handleUnknown
+              ]
+  >> masterReceive
 
 slave :: ProcessId -> Count -> ProcessM ()
 slave mPid c =
