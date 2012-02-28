@@ -49,7 +49,7 @@ type Count = TVar Int
 
 handleAddCountRequest :: Count -> AddCountRequest -> ProcessM ()
 handleAddCountRequest c msg = do
-  say ("Received: " ++ show msg)
+  -- say ("Received: " ++ show msg)
   liftIO $ atomically $ do 
     n <- readTVar c
     writeTVar c (acrCount msg + n)
@@ -57,7 +57,7 @@ handleAddCountRequest c msg = do
 
 handleGetAndResetRequest :: ProcessId -> Count -> GetAndResetRequest -> ProcessM ()
 handleGetAndResetRequest mPid c msg = do
-  say ("Received: " ++ show msg)
+  -- say ("Received: " ++ show msg)
   n <- liftIO $ atomically $ do
     n' <- readTVar c
     writeTVar c 0
@@ -67,7 +67,7 @@ handleGetAndResetRequest mPid c msg = do
 
 handleTerminateRequest :: ProcessM ()
 handleTerminateRequest = do
-  say "Received TerminateRequest"
+  -- say "Received TerminateRequest"
   terminate
   return ()
 
@@ -79,11 +79,15 @@ handleUnknown = do
 newCount :: Int -> IO Count
 newCount n = atomically $ newTVar n
 
+msgCount :: Int
+msgCount = 3000000
+
 masterProcess :: ProcessM ()
 masterProcess = do
   mPid <- getSelfPid
   slavePid <- spawnLocal $ slaveProcess mPid
-  replicateM_ 3 $ send slavePid AddCountRequest { acrCount = 10 }
+  replicateM_ msgCount $ send slavePid AddCountRequest { acrCount = 100 }
+  send slavePid GetAndResetRequest
   send slavePid TerminateRequest
   return ()
   
@@ -112,6 +116,6 @@ main :: IO ()
 main = 
   defaultMain
   [
-    bgroup "SimpleCounting" [ bench "10" $ remoteInit (Just "config") [Main.__remoteCallMetaData] initialProcess  
+    bgroup "SimpleCounting" [ bench (show msgCount) $ remoteInit (Just "config") [Main.__remoteCallMetaData] initialProcess  
                             ]
   ]

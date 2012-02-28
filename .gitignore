@@ -14,3 +14,5 @@
 nohup.out
 # Ignore the dist directory that is created by runghc ./Setup.hs build
 dist
+# Ignore benchmark test run results
+master/*.html
