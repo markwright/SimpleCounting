@@ -1,12 +1,13 @@
 -- Copyright (c) 2012, Mark Wright.  All rights reserved.
 
-{-# LANGUAGE DeriveDataTypeable,TemplateHaskell #-}
+{-# LANGUAGE DeriveDataTypeable, TemplateHaskell #-}
 
 module Main where
 
 import Control.Concurrent.STM
 import Control.Monad (replicateM_)
-import Control.Monad.Trans (lift, liftIO)
+import Control.Monad.Trans (liftIO)
+import Criterion.Main
 import Data.Data
 import Data.Typeable
 import Data.Binary
@@ -59,12 +60,19 @@ handleGetAndResetRequest mPid c msg = do
 
 handleUnknown :: ProcessM ()
 handleUnknown = do
-  say ("Received unknown")
+  say "Received unknown"
   return ()
 
 newCount :: Int -> IO Count
 newCount n = atomically $ newTVar n
 
+masterProcess :: ProcessM ()
+masterProcess = do
+  mPid <- getSelfPid
+  slavePid <- spawnLocal $ slaveProcess mPid
+  replicateM_ 3 $ send slavePid AddCountRequest { acrCount = 10 }
+  return ()
+  
 slaveProcess :: ProcessId -> ProcessM ()
 slaveProcess mPid = do
   c <- liftIO $ newCount 0
@@ -81,13 +89,14 @@ slave mPid c =
 $( remotable ['slaveProcess] )
 
 initialProcess :: String -> ProcessM ()
-initialProcess "MASTER" = do
-  mPid <- getSelfPid
-  slavePid <- spawnLocal $ slaveProcess mPid
-  replicateM_ 3 $ send slavePid AddCountRequest { acrCount = 10 }
-  return ()
+initialProcess "MASTER" = masterProcess
 initialProcess "SLAVE" = receiveWait []
 initialProcess _ = error "Role must be SLAVE or MASTER"
 
 main :: IO ()
-main = remoteInit (Just "config") [Main.__remoteCallMetaData] initialProcess  
+main = 
+  defaultMain
+  [
+    bgroup "SimpleCounting" [ bench "10" $ remoteInit (Just "config") [Main.__remoteCallMetaData] initialProcess  
+                            ]
+  ]

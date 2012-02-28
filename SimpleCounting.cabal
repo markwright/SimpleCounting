@@ -1,5 +1,5 @@
 name:                SimpleCounting
-version:             0.0.0.1
+version:             0.0.0.2
 synopsis:            Simple counting Remote/Cloud Haskell client server example
 description:         The server accepts two messages:
                      A positive number message that is added to an existing count.

@@ -1,4 +1,4 @@
-cfgRole MASTER
+cfgRole SLAVE
 cfgHostName localhost
 cfgKnownHosts localhost
 
