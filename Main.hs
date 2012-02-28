@@ -26,6 +26,9 @@ data GetAndResetReply = GetAndResetReply
   { gsrCount :: Int
   } deriving (Eq, Data, Show, Typeable)
 
+data TerminateRequest = TerminateRequest
+  deriving (Eq, Data, Show, Typeable)
+
 instance Binary AddCountRequest where
   get = genericGet
   put = genericPut
@@ -35,6 +38,10 @@ instance Binary GetAndResetRequest where
   put = genericPut
 
 instance Binary GetAndResetReply where
+  get = genericGet
+  put = genericPut
+
+instance Binary TerminateRequest where
   get = genericGet
   put = genericPut
 
@@ -58,6 +65,12 @@ handleGetAndResetRequest mPid c msg = do
   send mPid GetAndResetReply { gsrCount = n }
   return ()
 
+handleTerminateRequest :: ProcessM ()
+handleTerminateRequest = do
+  say "Received TerminateRequest"
+  terminate
+  return ()
+
 handleUnknown :: ProcessM ()
 handleUnknown = do
   say "Received unknown"
@@ -71,6 +84,7 @@ masterProcess = do
   mPid <- getSelfPid
   slavePid <- spawnLocal $ slaveProcess mPid
   replicateM_ 3 $ send slavePid AddCountRequest { acrCount = 10 }
+  send slavePid TerminateRequest
   return ()
   
 slaveProcess :: ProcessId -> ProcessM ()
@@ -82,6 +96,7 @@ slave :: ProcessId -> Count -> ProcessM ()
 slave mPid c =
   receiveWait [ match (\(msg@AddCountRequest{}) -> handleAddCountRequest c msg)
               , match (\(msg@GetAndResetRequest{}) -> handleGetAndResetRequest mPid c msg)
+              , match (\(msg@TerminateRequest{}) -> handleTerminateRequest)
               , matchUnknown handleUnknown
               ]
   >> slave mPid c
