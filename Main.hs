@@ -9,10 +9,9 @@ import Control.Monad (replicateM_)
 import Control.Monad.Trans (liftIO)
 import Criterion.Main
 import Data.Data
-import Data.Typeable
 import Data.Binary
+import Data.Typeable ()
 import Remote
-import Remote.Process
 
 data AddCountRequest = AddCountRequest
   { acrCount :: Int
@@ -66,10 +65,7 @@ handleGetAndResetRequest mPid c msg = do
   return ()
 
 handleTerminateRequest :: ProcessM ()
-handleTerminateRequest = do
-  -- say "Received TerminateRequest"
-  terminate
-  return ()
+handleTerminateRequest = terminate
 
 handleUnknown :: ProcessM ()
 handleUnknown = do

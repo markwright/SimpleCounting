@@ -21,3 +21,4 @@ executable SimpleCounting
                      mtl,
                      remote,
                      stm
+  Ghc-Options:      -Wall -O2 -rtsopts
